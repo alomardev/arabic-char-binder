@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="ArabicCharBinder:jar">
-    <output-path>$PROJECT_DIR$/dist/</output-path>
-    <root id="archive" name="ArabicCharBinder.jar">
-      <element id="module-output" name="ArabicCharBinder" />
-    </root>
-  </artifact>
-</component>
