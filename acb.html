@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Arabic Char Binders</title>
+	<style>
+		* {
+			-webkit-box-sizing: border-box;
+					box-sizing: border-box;
+		}
+		body, html {
+			margin: 0;
+			padding: 0;
+			background: lightgrey;
+			font-family: Arial, Tahoma
+		}
+		.wrapper {
+			max-width: 900px;
+			margin: 0 auto;
+		}
+		.card {
+			background: white;
+			border-radius: 5px;
+			-webkit-box-shadow: 0 3px 20px rgba(0,0,0,0.3);
+					box-shadow: 0 3px 20px rgba(0,0,0,0.3);
+			margin: 0 15px 15px;
+			padding: 10px;
+		}
+		hr {
+			border: none;
+			border-top: 1px solid lightgray;
+			margin-bottom: 11px;
+		}
+		h1 {
+			margin-bottom: 20px;
+			text-align: center;
+		}
+		textarea {
+			width: 100%;
+			font-size: 1.5em;
+			resize: vertical;
+			padding: 10px;
+			border: 1px solid #9C9C9C;
+		}
+		.actions {
+			display: -webkit-box;
+			display: -ms-flexbox;
+			display: flex;
+			-webkit-box-orient: horizontal;
+			-webkit-box-direction: normal;
+				-ms-flex-direction: row;
+					flex-direction: row;
+			-webkit-box-align: center;
+				-ms-flex-align: center;
+					align-items: center;
+			-webkit-box-pack: justify;
+				-ms-flex-pack: justify;
+					justify-content: space-between;
+		}
+		button {
+			font-size: 1.2em;
+			border: none;
+			background: #0088FF;
+			border-radius: 3px;
+			color: white;
+			padding: 4px 15px;
+		}
+		button:hover {
+			background: #35A1FF;
+		}
+    .ta-label {
+      display: block;
+      text-align: right;
+      padding: 7px 0;
+    }
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+		<h1>سكربت الكتابة بالعربية</h1>
+		<div class="card">
+      <label class='ta-label'>النص الأصلي</label>
+			<bdo dir="rtl"><textarea id='inputTa' cols="30" rows="4" oninput="updateOutput()"></textarea></bdo>
+			<hr>
+      <label class='ta-label'>النص المعدل</label>
+			<bdo dir="ltr"><textarea id='outputTa' cols="30" rows="4" readonly></textarea></bdo>
+			<hr>
+			<div class="actions">
+				<div class="buttons">
+					<button onclick="copyOuput()">نسخ</button>
+				</div>
+				<div class="options">
+					<bdo dir="rtl"><label><input type="checkbox" id="reverseCb" checked onclick="updateOutput()"> عكس الأحرف</label></bdo>&nbsp;
+					<bdo dir="rtl"><label><input type="checkbox" id="hindiCb" checked onclick="updateOutput()"> أرقام هندية</label></bdo>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+	var sBoundCharPN = ['\0', 'ﺒ', 'ﺘ', 'ﺜ', 'ﺠ', 'ﺤ', 'ﺨ', '\0', '\0', '\0', '\0', 'ﺴ', 'ﺸ', 'ﺼ', 'ﻀ', 'ﻄ', 'ﻈ', 'ﻌ', 'ﻐ', 'ﻔ', 'ﻘ', 'ﻜ', 'ﻠ', 'ﻤ', 'ﻨ', 'ﻬ', '\0', 'ﻴ', 'ﯩ', '\0', '\0', '\0', 'ﺌ', '\0', '\0', '\0', '\0', '\0', '\0', '\0'];
+	var sBoundCharsP = ['ﺎ', 'ﺐ', 'ﺖ', 'ﺚ', 'ﺞ', 'ﺢ', 'ﺦ', 'ﺪ', 'ﺬ', 'ﺮ', 'ﺰ', 'ﺲ', 'ﺶ', 'ﺺ', 'ﺾ', 'ﻂ', 'ﻆ', 'ﻊ', 'ﻎ', 'ﻒ', 'ﻖ', 'ﻚ', 'ﻞ', 'ﻢ', 'ﻦ', 'ﻪ', 'ﻮ', 'ﻲ', 'ﻰ', 'ﺄ', 'ﺈ', 'ﺆ', 'ﺊ', 'ﺂ', 'ﻼ', 'ﻸ', 'ﻺ', 'ﻶ', 'ﺔ', '\0'];
+	var sBoundCharsN = ['\0', 'ﺑ', 'ﺗ', 'ﺛ', 'ﺟ', 'ﺣ', 'ﺧ', '\0', '\0', '\0', '\0', 'ﺳ', 'ﺷ', 'ﺻ', 'ﺿ', 'ﻃ', 'ﻇ', 'ﻋ', 'ﻏ', 'ﻓ', 'ﻗ', 'ﻛ', 'ﻟ', 'ﻣ', 'ﻧ', 'ﻫ', '\0', 'ﻳ', 'ﯨ', '\0', '\0', '\0', 'ﺋ', '\0', '\0', '\0', '\0', '\0', '\0', '\0'];
+
+	function isConnector(c) {
+		switch (c) {
+			case 'ب': case 'ت': case 'ث': case 'ج': case 'ح': case 'خ': case 'س': case 'ش': case 'ص': case 'ض': case 'ط': case 'ظ': case 'ع': case 'غ': case 'ف': case 'ق': case 'ك': case 'ل': case 'م': case 'ن': case 'ه': case 'ي': case 'ى': case 'ئ': case 'ـ': return true;
+			default: return false;
+		}
+	}
+
+	function isIsolator(c) {
+		return getArabicIndex(c) > -1 && !isConnector(c);
+	}
+
+	function getArabicIndex(c) {
+		switch (c) {
+			case 'ا':
+				return 0;
+			case 'ب':
+				return 1;
+			case 'ت':
+				return 2;
+			case 'ث':
+				return 3;
+			case 'ج':
+				return 4;
+			case 'ح':
+				return 5;
+			case 'خ':
+				return 6;
+			case 'د':
+				return 7;
+			case 'ذ':
+				return 8;
+			case 'ر':
+				return 9;
+			case 'ز':
+				return 10;
+			case 'س':
+				return 11;
+			case 'ش':
+				return 12;
+			case 'ص':
+				return 13;
+			case 'ض':
+				return 14;
+			case 'ط':
+				return 15;
+			case 'ظ':
+				return 16;
+			case 'ع':
+				return 17;
+			case 'غ':
+				return 18;
+			case 'ف':
+				return 19;
+			case 'ق':
+				return 20;
+			case 'ك':
+				return 21;
+			case 'ل':
+				return 22;
+			case 'م':
+				return 23;
+			case 'ن':
+				return 24;
+			case 'ه':
+				return 25;
+			case 'و':
+				return 26;
+			case 'ي':
+				return 27;
+			case 'ى':
+				return 28;
+			case 'أ':
+				return 29;
+			case 'إ':
+				return 30;
+			case 'ؤ':
+				return 31;
+			case 'ئ':
+				return 32;
+			case 'آ':
+				return 33;
+			case 'ﻻ':
+				return 34;
+			case 'ﻹ':
+				return 35;
+			case 'ﻷ':
+				return 36;
+			case 'ﻵ':
+				return 37;
+			case 'ة':
+				return 38;
+			case 'ـ':
+				return 39;
+			default:
+				return -1;
+		}
+	}
+
+	function convertToHinduDigit(c) {
+		switch (c) {
+			case '0':
+				return '٠';
+			case '1':
+				return '١';
+			case '2':
+				return '٢';
+			case '3':
+				return '٣';
+			case '4':
+				return '٤';
+			case '5':
+				return '٥';
+			case '6':
+				return '٦';
+			case '7':
+				return '٧';
+			case '8':
+				return '٨';
+			case '9':
+				return '٩';
+			default:
+				return c;
+		}
+	}
+
+	function bind(input, flags) {
+		let ignoreArabicDigits = flags ? flags.ignoreArabicDigits : true;
+		let reverseChars = flags ? flags.reverseChars : true;
+
+		// Convert chars from normal to bound
+		let len = input.length;
+		let output = [];
+
+		// Splitting each line
+		let lines = input.split('\n');
+		let pointer = 0;
+		let first = true;
+		for (line of lines) {
+			if (!first) {
+				output[pointer] = '\n';
+				pointer++;
+			}
+
+			let l = line.length;
+			for (let i = 0; i < l; i++) {
+				let fi = !reverseChars ? i : l - i - 1;
+				let p = i > 0 ? line[i - 1] : '\0';
+				let c = line[i];
+				let n = i < l - 1 ? line[i + 1] : '\0';
+
+				if (c == 'ل') {
+					switch (n) {
+						case 'ا':
+							i++;
+							c = 'ﻻ';
+							break;
+						case 'أ':
+							i++;
+							c = 'ﻷ';
+							break;
+						case 'إ':
+							i++;
+							c = 'ﻹ';
+							break;
+						case 'آ':
+							i++;
+							c = 'ﻵ';
+					}
+				}
+
+				let connectP = isConnector(p);
+				let connectN = getArabicIndex(n) > -1 && !isIsolator(c);
+
+				let newChar = '\0';
+				let index = getArabicIndex(c);
+				if (index > -1) {
+					if (connectP && connectN) {
+						newChar = sBoundCharPN[index];
+					} else if (connectP) {
+						newChar = sBoundCharsP[index];
+					} else if (connectN) {
+						newChar = sBoundCharsN[index];
+					}
+				}
+
+				if (!ignoreArabicDigits && c >= '0' && c <= '9') {
+					newChar = convertToHinduDigit(c);
+				}
+				newChar = newChar == '\0' ? c : newChar;
+				output[pointer + fi] = newChar;
+			}
+
+			pointer += l;
+			first = false;
+		}
+
+		return output.join("");
+	}
+
+  var tai = document.getElementById('inputTa');
+  var tao = document.getElementById('outputTa');
+  var cbh = document.getElementById('hindiCb');
+  var cbr = document.getElementById('reverseCb');
+
+  function updateOutput() {
+    tao.value = bind(tai.value, {
+      ignoreArabicDigits: !cbh.checked,
+      reverseChars: cbr.checked
+    });
+  }
+
+  function copyOuput() {
+    tao.select();
+    document.execCommand("copy");
+  }
+	</script>
+</body>
+</html>
